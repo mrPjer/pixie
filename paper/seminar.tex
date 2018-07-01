@@ -69,7 +69,7 @@ Dodatno, ne želimo preporuku stvoriti samo na temelju jednog pina, već više n
 
 \subsection{Razmjer podataka i vremenski zahtjevi}
 
-Važno je također posebnu pažnju skrenuti i na razmjer podataka kojima Pinterest barata. U svome radu\footnote{\cite{DBLP:journals/corr/abs-1711-07601}} ističu kako njihov graf sadrži 7 milijardi čvorova i 100 milijardi bridova.
+Važno je također posebnu pažnju skrenuti i na razmjer podataka kojima Pinterest barata. U svome radu\footnote{\cite{DBLP:journals/corr/abs-1711-07601}} ističu kako njihov graf sadrži 7 milijardi čvorova i 100 milijardi bridova. U radu također ističu i broj korisnika koji nadmašuje 200 milijuna.
 
 Također treba istaknuti i vremenske zahtjeve na preporučiteljski sustav -- Pinterestu je važno da se preporuke mogu generirati u stvarnom vremenu, kako korisnik koristi sustav. Zbog toga je važno da izračun preporuka bude brz te je već čekanje od jedne sekunde previše i znatno bi narušilo krajnje korisničko iskustvo.
 
@@ -101,7 +101,42 @@ No, za uspješan rad algoritma, potrebno je na ovu nasumičnu šetnju dodati jo�
 
 \section{Dodavanje naklonosti nasumičnoj šetnji}
 
+Primijetimo da prethodni algoritam ne uzima u obzir nikakva saznanja o korisniku. Za dva korisnika, $u_1$ i $u_2$, i isti početni pin $p$, preporuka će, ignoriravši nasumičnost šetnje, biti ista. Kako nam je želja dobiti preporuke koje će biti personalizirane za korisnika, potrebno je šetnju \textit{pogurnuti} u pravom smjeru. Prilika za to napraviti je prilikom odabira brida kojim će šetač proći. Umjesto nasumičnog odabira gdje svaki brid ima jednaku vjerojatnost da bude izabran, vjerojatnosti odabira se mogu izraziti kao pripadne težine bridova koje ovise o svojstvima trenutnog korisnika i predmeta koji se razmatra.
+
 \section{Upiti sa više pinova i pripadnim težinama}
+
+Kako bi se korisnika još bolje modeliralo, uz trenutni pin kojeg korisnik pregledava možemo uzeti u obzir i povijest pinova koje je korisnik pregledavao. Tako umjesto jednog upita q izvršimo skup upita Q i za svakog izračunamo pripadni brojač $V_q$.
+
+Na kraju je potrebno dobivene brojače kombinirati. Brojače bi mogli kombinirati običnom sumom ili prosjekom, no nije svaki upit jednak. Naime, ako je početni pin jako povezan (ako se radi o čvoru visokog stupnja), biti će potrebno napraviti više koraka kako bi značajnost brojača bila jednaka onom dobivenom kretanjem od čvora niskog stupnja. U suprotnom bi preporuke generirane čvorovima niskog stupnja dominirale nad preporukama čvorova visokih stupanja, iako su potonji zbog svoje veće povezanosti u grafu značajniji.
+
+Kako bi se riješio ovaj problem, za svaki upit q računa se faktor razmjera (\textit{scaling factor}) na slijedeći način:
+
+\begin{centering}
+		  $ k = |E(q)| $ \\
+		  $ C = max_{p \in P}|E(p)| $ \\
+		  $ s_q = k * (C - log(k)) $ \\
+        k -- stupanj pin čvora upita \\
+		  C -- najveći stupanj nekog pin čvora 
+		  \par
+\end{centering}
+
+Na temelju tog faktora, računa se duljina šetnje pojedinog pina, $N_q$ temeljem ove formule:
+
+\begin{centering}
+	$ N_q = w_qN\frac{s_q}{\sigma_{r \in Q}s_r} $\par
+\end{centering}
+
+Distribucija duljine šetnji je sada takva da će šetnje koje počinju u čvorovima visokog stupnja imati razmjerno veću duljinu u odnosu na šetnje koje počinju u čvorovima niskog stupnja, ali će i dalje i ti čvorovi imati dovoljno duge šetnje.
+
+Za potrebe ilustracije, generirali smo nasumičan skup od 40 čvorova stupnja između 1 i 100 i za svakog izračunali $N_q$ uz $N = 1000$ i $w_q = 1$. Vidljivo je da broj koraka raste linearno sa stupnjem čvora. Čvorovima stupnja 1 dodijeljena je šetnja duljine 45 koraka, a čvorovima stupnja 99 šetnja duljine 4328. Korišteni skup podataka dostupan je u popratnoj datoteci \textit{degree\_length\_chart.ods}.
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=\textwidth]{degree_chart}
+	\caption{Odnos $k_q$ i $N_q$ za nasumično generiran skup podataka}
+	\cite{medium-article}
+	\label{fig:pins_boards}
+\end{figure}
 
 \section{Poticanje pinova koji se pojavljuju više puta}
 
