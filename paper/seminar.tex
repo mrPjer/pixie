@@ -140,6 +140,15 @@ Za potrebe ilustracije, generirali smo nasumičan skup od 40 čvorova stupnja iz
 
 \section{Poticanje pinova koji se pojavljuju više puta}
 
+Nakon što smo odredili duljine šetnji, preostaje pitanje kako na kraju kombinirati dobivene $V_q$ u jedan. Intuicija je da su oni pinovi koji su povezani sa više pinova u Q također i relevantniji krajnjem korisniku, tj.\ oni pinovi koje više različitih šetnji posjetilo su značajniji za konačni rezultat. Jednostavnim zbrajanjem $V_q$ bi izgubili ovu informaciju pa umjesto toga ukupan broj \textit{pogodaka} za pin p računamo ovako:
+
+\begin{centering}
+		  $$ V[p] = (\sum_{q \in Q}{\sqrt{V_q[p]}})^2 $$
+		  \par
+\end{centering}
+
+Na ovaj način će pinovi koji se pojavljuju u više šetnji biti \textit{nagrađeniji}. Primjerice, ako se jedan pin pojavljuje u dvije šetnje 100 puta, njegov rezultat će biti $ (\sqrt{100} + \sqrt{100})^2 = 400 $ što je znatno više od jednog pina koji se u jednoj šetnji pojavljuje 200 puta, čiji će rezultat tada biti $ \sqrt{100}^2 = 100 $.
+
 \section{Rano zaustavljanje}
 
 \section{Smanjivanje grafa}
