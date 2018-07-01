@@ -151,6 +151,10 @@ Na ovaj način će pinovi koji se pojavljuju u više šetnji biti \textit{nagra�
 
 \section{Rano zaustavljanje}
 
+Primijetimo da šetnje imaju konstantnu duljinu koja ovisi o početnom čvoru. No, možemo postići značajnu uštedu vremena ako odlučimo stati sa šetnjom ranije ako se to čini kao dobra ideja.
+
+Naivan kriterij za zaustavljanje može biti konvergencija rješenja - top N kandidata se nije promijenilo u zadnjih k koraka. No, kako praćenje te informacije može biti skupo (pa čak i skuplje od same šetnje), Pixie uvodi jednostavnu heuristiku - šetnju zaustavljamo kada je bar $n_p$ pinova posjećeno bar $n_v$ puta. Brojevi $n_p$ i $n_v$ direktno utječu na kvalitetu rezultata i trajanje algoritma pa ih je potrebno pažljivo odabrati.
+
 \section{Smanjivanje grafa}
 
 \chapter{Ostvarenje}
