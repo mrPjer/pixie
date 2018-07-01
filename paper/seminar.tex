@@ -1,6 +1,7 @@
 \documentclass[times, utf8, seminar]{fer}
 \usepackage{booktabs}
 \usepackage{graphicx}
+\usepackage{csquotes}
 \graphicspath{{slike/}}
 
 \begin{document}
@@ -16,6 +17,18 @@
 \tableofcontents
 
 \chapter{Uvod}
+
+Preporučiteljski sustav je sustav čija je zadaća predvidjeti korisnikov odabir nekog izbora\footnote{\cite{mmd}}. Takvi sustavi čine veoma važnu značajku modernih mrežnih usluga, nudeći korisnicima zanimljiv, bitan i njima personaliziran sadržaj. Time također mogu i povećati interakciju korisnika sa sadržajem za kojeg potencijalno nije ni svjestan da postoji, a koji bi mu mogao biti od interesa. Tako jedan glazbeni web dućan može povećati prodaju preporučivanjem pjesama i albuma sličnima onima za koje je korisnik pokazao interes, dok jedan portal s vijestima može korisniku preporučiti slične i zanimljive vijesti kako bi ga duže zadržao na samom portalu i povećao prihod od prikaza reklama.
+
+Pinterest\footnote{\url{https://pinterest.com}} je moderna web usluga koja svojim korisnicima omogućuje otkrivanje novih i relevantnih ideja za izradu kreativnih projekata -- od kuharskih recepata pa do dizajna interijera. Riječima njihovog inženjerskog tima:
+
+\begin{displayquote}
+		  At Pinterest, a primary engineering challenge is helping people discover and do things every day, which means serving the right idea to the right person at the right time.\footnote{\cite{medium-article}}
+\end{displayquote}
+
+Pinterest je u svojoj srži preporučiteljski sustav te je važno da kao takav može dati korisne preporuke u dovoljno kratkom vremenu kako bi svojim korisnicima ponudio što veću vrijednost. Zbog veličine podataka i vremenskih zahtjeva kojima Pinterest barata, a koje ćemo iznijeti u nastavku, postojeća rješenja pokazivala su značajne nedostatke te je Pinterest za svoje potrebe odlučio napraviti vlastiti preporučiteljski sustav, naziva Pixie, koji se pokazao izrazito učinkovitim. Nad njihovim skupom podataka -- bipartitnog grafa od 3 milijarde čvorova povezanih sa 17 milijardi bridova, jedan Pixie poslužitelj može poslužiti 1.200 zahtjeva po sekundi sa latencijom u 99-om centilu unutar 60 milisekundi. S poslovne strane se Pixie također pokazao kao uspjeh jer je povećao i relevantnost preporuka koje se korisnicima nude i time povećao angažman korisnika za do 50\%\footnote{\cite{DBLP:journals/corr/abs-1711-07601}}.
+
+U nastavku dajemo pregled preporučiteljskog sustava Pixie -- problema kojeg on pokušava riješiti, predloženo rješenje, primjer ostvarenja te rezultate koje to ostvarenje daje. Također nudimo i opis vlastite implementacije osnovnih algoritama preporučiteljskog sustava u programskom jeziku Kotlin\footnote{\url{https://kotlinlang.org}} te pregled dobivenih rezultata navedenog rješenja nad simuliranim skupom podataka.
 
 \chapter{Problem}
 
