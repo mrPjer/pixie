@@ -47,9 +47,33 @@ Postoje razni pristupi rješavanju ovog problema, od čega su možda najpopularn
 
 \section{Pinterestov problem}
 
+Pogledajmo sada problem preporučivanja kojeg Pinterest pokušava riješiti. Vidjet ćemo da se određena svojstva specifična njihovom problemu mogu iskoristiti za bolje i efikasnije generiranje preporuka.
+
 \subsection{Problem preporučivanja}
 
-\subsection{Razmjer podataka}
+U Pinterestovom skupu podataka postoje dva tipa entiteta - pin (\textit{pribadača, značka} i board (\textit{ploča}). Svaki pin može biti povezan s više boardova i svaki board može imati više pinova, tj.\ relacija među njima je oblika N-N.
+
+Te podatke možemo prikazati grafom na način da čvorove predstavljaju pinovi i boardovi, a bridove veze među njima. Kako ne postoji veza pin-pin niti veza board-board, navedeni graf je bipartitan. Kako su veze također dvosmjerne, graf je i neusmjeren.
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=\textwidth]{pins_boards_graph}
+	\caption{Graf podataka}
+	\cite{medium-article}
+	\label{fig:pins_boards}
+\end{figure}
+
+Kada korisnik posjeti pin ili board, želja nam je pokušati preporučiti relevantne pinove kako bi korisnik mogao nastaviti svoju potragu u svome smjeru. Tako od preporučiteljskog sustava želimo da nam za dani pin i dani graf nađe druge pinove koji će korisniku biti zanimljivi.
+
+Dodatno, ne želimo preporuku stvoriti samo na temelju jednog pina, već više njih koje je korisnik posjetio, s time da veći naglasak želimo staviti na one pinove koje je korisnik posjetio nedavno. Konačno, kako bi još više poboljšali preporuke, veći naglasak želimo staviti na one pinove koji bi korisniku mogli biti zanimljivi po nekim drugim parametrima koji nisu očiti iz grafa -- kao što su jezik sadržaja ili tema oko koje je sadržaj grupiran.
+
+\subsection{Razmjer podataka i vremenski zahtjevi}
+
+Važno je također posebnu pažnju skrenuti i na razmjer podataka kojima Pinterest barata. U svome radu\footnote{\cite{DBLP:journals/corr/abs-1711-07601}} ističu kako njihov graf sadrži 7 milijardi čvorova i 100 milijardi bridova.
+
+Također treba istaknuti i vremenske zahtjeve na preporučiteljski sustav -- Pinterestu je važno da se preporuke mogu generirati u stvarnom vremenu, kako korisnik koristi sustav. Zbog toga je važno da izračun preporuka bude brz te je već čekanje od jedne sekunde previše i znatno bi narušilo krajnje korisničko iskustvo.
+
+S ovim svime na umu, vidimo jasnu motivaciju zašto napraviti vlastiti preporučiteljski sustav -- oblik i količina podataka te vremenski zahtjevi nisu prikladni za pristup poput suradničkog filtriranja čije je vrijeme osvježavanja znatno duže i čiji prostorni zahtjevi nisu prikladni za red veličine miljardi.
 
 \chapter{Rješenje}
 
