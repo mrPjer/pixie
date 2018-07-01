@@ -33,7 +33,7 @@ U nastavku dajemo pregled preporučiteljskog sustava Pixie -- problema kojeg on 
 \chapter{Problem}
 
 \section{Generalizirani model}
-Opišimo prvo općeniti problem preporučivanja koji pokušavamo riješiti. 
+Opišimo prvo općeniti problem preporučivanja koji pokušavamo riješiti. Model kojeg iznosimo ovdje inspiriran je formalnim modelom iznesenim u \cite{avsp-recommender}.
 
 Krenimo od sustava koji se sastoji od dva skupa -- skupa korisnika \textit{K} i skupa predmeta \textit{P} s kojima korisnik može međudjelovati. Dodatno, svaki korisnik može za neki predmet iskazati koliko mu je taj predmet zanimljiv, što možemo modelirati funkcijom zanimljivosti $z = K \times P \to \mathbb{R}$ koja za danog korisnika i dani predmet vraća koliko je tom korisniku taj predmet zanimljiv.
 
@@ -43,11 +43,13 @@ Ovakav jednostavan model pokazuje temeljni zahtjev od preporučiteljskog sustava
 
 No, postoje određeni izazovi kojih je važno biti svjestan. Prvo je nepoznavanje funkcije z -- korisnik će eksplicitno izraziti zanimljivost tek za veoma maleni podskup predmeta. Kako bi mogli ponuditi preporuke, morati ćemo zanimljivost za ostale predmete procijeniti. Drugi bitan izazov je veličina skupa podataka -- $K \times P$ može biti velikih dimenzija, reda veličine $10^6 \times 10^6$ pa nećemo moći naivno obraditi cijeli skup podataka, već će biti nužno usredotočiti se na tek maleni podskup istih.
 
-\section{Klasični pristupi}
+Postoje razni pristupi rješavanju ovog problema, od čega su možda najpopularniji preporučivanje temeljeno na sadržaju te suradničko filtriranje, koji su također dostupni kao gotovi algoritmi u programskom okviru \textit{Apache Mahout}\footnote{\cite{rovkp-mahout}}.
 
-\section{Pinterestovi podaci}
+\section{Pinterestov problem}
 
-\section{Pinterestov razmjer}
+\subsection{Problem preporučivanja}
+
+\subsection{Razmjer podataka}
 
 \chapter{Rješenje}
 
