@@ -32,6 +32,23 @@ U nastavku dajemo pregled preporučiteljskog sustava Pixie -- problema kojeg on 
 
 \chapter{Problem}
 
+\section{Generalizirani model}
+Opišimo prvo općeniti problem preporučivanja koji pokušavamo riješiti. 
+
+Krenimo od sustava koji se sastoji od dva skupa -- skupa korisnika \textit{K} i skupa predmeta \textit{P} s kojima korisnik može međudjelovati. Dodatno, svaki korisnik može za neki predmet iskazati koliko mu je taj predmet zanimljiv, što možemo modelirati funkcijom zanimljivosti $z = K \times P \to \mathbb{R}$ koja za danog korisnika i dani predmet vraća koliko je tom korisniku taj predmet zanimljiv.
+
+Ukoliko za danog korisnika sortiramo skup predmeta po funkciji zanimljivosti, dobivamo listu predmeta poredanih po zanimljivosti za tog korisnika $P_k = sorted(P, z_k)$. Temeljem ove liste korisniku možemo preporučiti novi sadržaj uzimajući, primjerice, prvih 5 elemenata te liste.
+
+Ovakav jednostavan model pokazuje temeljni zahtjev od preporučiteljskog sustava -- da na temelju poznatih informacija o korisniku može za njega preporučiti relevantan sadržaj. 
+
+No, postoje određeni izazovi kojih je važno biti svjestan. Prvo je nepoznavanje funkcije z -- korisnik će eksplicitno izraziti zanimljivost tek za veoma maleni podskup predmeta. Kako bi mogli ponuditi preporuke, morati ćemo zanimljivost za ostale predmete procijeniti. Drugi bitan izazov je veličina skupa podataka -- $K \times P$ može biti velikih dimenzija, reda veličine $10^6 \times 10^6$ pa nećemo moći naivno obraditi cijeli skup podataka, već će biti nužno usredotočiti se na tek maleni podskup istih.
+
+\section{Klasični pristupi}
+
+\section{Pinterestovi podaci}
+
+\section{Pinterestov razmjer}
+
 \chapter{Rješenje}
 
 \chapter{Ostvarenje}
