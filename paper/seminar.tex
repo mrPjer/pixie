@@ -157,6 +157,10 @@ Naivan kriterij za zaustavljanje može biti konvergencija rješenja - top N kand
 
 \section{Smanjivanje grafa}
 
+Konačno, kao veoma bitan korak pokazalo se i smanjivanje samog grafa (\textit{graph pruning}) kao oblik predobrade podataka. Sam postupak uvelike ovisi o skupu podataka nad kojim se primijenjuje. U Pinterestovom slučaju svelo se na heuristiku uklanjanja čvorova sa visokom entropijom te, za pojedinačne pinove, uklanjanja onih bridova koji vode na boardove koji imaju najmanju sličnost sa danim pinom.
+
+U Pinterestovom slučaju ovaj se postupak itekako isplatio -- sa 7 milijardi čvorova i 100 milijardi bridova, graf je smanjen na 3 milijarde čvorova (43\%) i 17 milijardi bridova (17\%). Dodatno, smanjenje grafa je također dovelo i do poboljšanja u kvaliteti preporuka u iznosu od 58\%, što je posljedica primijenjene heuristike koja sama po sebi uklanja manje relevantne bridove.
+
 \chapter{Ostvarenje}
 
 \chapter{Rezultat}
