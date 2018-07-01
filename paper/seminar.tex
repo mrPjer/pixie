@@ -81,6 +81,24 @@ Kako bi riješili navedeni problem, u Pinterestu su primijenili nekoliko inovati
 
 \section{Jednostavna nasumična šetnja}
 
+Algoritam Pixie zasnovan je na jednostavnoj nasumičnoj šetnji po grafu $G = (P, B, E) $.
+
+Za dani graf G i početni pin $p \in P$, algoritam vrši nasumičnu šetnju u slijedećim koracima:
+
+\begin{enumerate}
+	\item Generiraj brojač $V: P \to \mathbb{N}$ s pretpostavljenom vrijednošću 0
+	\item Za dani p nasumično odaberi $e_1 \in E$ koji povezuje p s nekim $b \in B$
+	\item Za b nasumično odaberi $e_2 \in E$ koji povezuje b s nekim $p_2 \in P$
+	\item Inkrementiraj $V[p_2]$
+	\item Nastavi od koraka 2.\ koristeći $p_2$ kao početni pin
+\end{enumerate}
+
+Jasno je da ovaj algoritam neće nikad završiti pa zato ograničavamo duljinu šetnje na odabrani broj N. Nakon što algoritam završi, u brojaču V imamo broj posjećenosti svakog pina. Kako je vjerojatnije da će nasumična šetnja češće proći pinovima koji su početnom pinu bliski, broj pogodaka možemo koristiti kao mjeru sličnosti i kao preporuku vratiti one pinove koji su najčešće posjećeni.
+
+Prednosti ovog algoritma su jednostavnost i performanse -- vrijeme izvođenja je konstantno u odnosu na veličinu grafa te ovisi samo o duljini šetnje, N.
+
+No, za uspješan rad algoritma, potrebno je na ovu nasumičnu šetnju dodati još poneka poboljšanja.
+
 \section{Dodavanje naklonosti nasumičnoj šetnji}
 
 \section{Upiti sa više pinova i pripadnim težinama}
