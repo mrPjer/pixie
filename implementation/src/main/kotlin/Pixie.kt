@@ -74,6 +74,50 @@ fun simpleRandomWalk(graph: AdjacencyGraph, startingPin: Pin, numberOfSteps: Int
     return counter
 }
 
+private fun <T, R, V, U> List<T>.sample(
+        startingElement: R,
+        weights: Map<Pair<V, U>, Double>,
+        combiner: (R, T) -> Pair<V, U>
+): T {
+    val totalWeight = map { weights[combiner(startingElement, it)]!! }.sum()
+    val selectedWeight = random.nextDouble() * totalWeight
+
+    var traversedWeight = 0.0
+    forEach {
+        traversedWeight += weights[combiner(startingElement, it)]!!
+
+        if (traversedWeight >= selectedWeight) {
+            return it
+        }
+    }
+    throw RuntimeException("Roulette wheel selection failed to select an element")
+}
+
+private fun List<Board>.sample(startingPin: Pin, weights: Map<Pair<Pin, Board>, Double>): Board =
+        sample(startingPin, weights) { i, j -> Pair(i, j) }
+
+private fun List<Pin>.sample(startingBoard: Board, weights: Map<Pair<Pin, Board>, Double>): Pin =
+        sample(startingBoard, weights) { i, j -> Pair(j, i) }
+
+fun weightedRandomWalk(graph: AdjacencyGraph, startingPin: Pin, numberOfSteps: Int, weights: Map<Pair<Pin, Board>, Double>): HashMap<Pin, Int> {
+    val counter = HashMap<Pin, Int>()
+
+    var step = 0
+    var pin = startingPin
+
+    while (step < numberOfSteps) {
+        val board = graph.pinsToBoards[pin].orEmpty().sample(pin, weights)
+        val otherPin = graph.boardsToPins[board]!!.sample(board, weights)
+
+        val oldCount = counter.getOrDefault(otherPin, 0)
+        counter[otherPin] = oldCount + 1
+        pin = otherPin
+        ++step
+    }
+
+    return counter
+}
+
 fun main(args: Array<String>) {
     val start = System.currentTimeMillis()
     System.out.printf("Generating dataset with %d pins, %d boards and %d edges%n", NUM_PINS, NUM_BOARDS, NUM_EDGES)
@@ -90,4 +134,10 @@ fun main(args: Array<String>) {
     val randomWalkResult = simpleRandomWalk(data, startingPin, NUM_STEPS)
     System.out.printf("Done in %d%n", System.currentTimeMillis() - randomWalkTime)
     randomWalkResult.printTop(10)
+
+    val weightedRandomWalkTime = System.currentTimeMillis()
+    System.out.printf("Starting weighted random walk with %d steps%n", NUM_STEPS)
+    val weightedRandomWalkResult = weightedRandomWalk(data, startingPin, NUM_STEPS, weights)
+    System.out.printf("Done in %d%n", System.currentTimeMillis() - weightedRandomWalkTime)
+    weightedRandomWalkResult.printTop(10)
 }

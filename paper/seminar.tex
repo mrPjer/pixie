@@ -104,7 +104,7 @@ Prednosti ovog algoritma su jednostavnost i performanse -- vrijeme izvođenja je
 
 No, za uspješan rad algoritma, potrebno je na ovu nasumičnu šetnju dodati još poneka poboljšanja.
 
-\section{Dodavanje naklonosti nasumičnoj šetnji}
+\section{Dodavanje pristranosti nasumičnoj šetnji}
 
 Primijetimo da prethodni algoritam ne uzima u obzir nikakva saznanja o korisniku. Za dva korisnika, $u_1$ i $u_2$, i isti početni pin $p$, preporuka će, ignoriravši nasumičnost šetnje, biti ista. Kako nam je želja dobiti preporuke koje će biti personalizirane za korisnika, potrebno je šetnju \textit{pogurnuti} u pravom smjeru. Prilika za to napraviti je prilikom odabira brida kojim će šetač proći. Umjesto nasumičnog odabira gdje svaki brid ima jednaku vjerojatnost da bude izabran, vjerojatnosti odabira se mogu izraziti kao pripadne težine bridova koje ovise o svojstvima trenutnog korisnika i predmeta koji se razmatra.
 
@@ -327,7 +327,106 @@ Izvršavanjem nasumične šetnje mijenjajući NUM\_STEPS dolazimo do slijedećih
 
 Vidljivo je da vrijeme izvršavanja raste otprilike linearno, što je i očekivano. Također vidimo i da je gornja granica za broj koraka šetnje reda veličine $10^5$. Sve više od toga bi trajalo predugo za preporuke u stvarnom vremenu. 
 
-\section{Dodavanje naklonosti nasumičnoj šetnji}
+\section{Dodavanje pristranosti nasumičnoj šetnji}
+
+U trenutnoj implementaciji prilikom svakog odabira svaki brid ima jednaku vjerojatnost biti odabran. Dodajmo sad mogućnost definiranja pristranosti šetnji kako bi povećali vjerojatnost odabira nekih zanimljivih bridova.
+
+Prvo, definirajmo metodu koja će generirati težine bridova. Generirane težine će biti između 0 i 1, a kako su sve veze dvosmjerne, dovoljno je kreirati težine za bridove u jednom smjeru.
+
+\begin{lstlisting}
+fun generateWeights(pinToBoards: Map<Pin, List<Board>>) = pinToBoards.flatMap { (pin, boards) ->
+    boards.map { board ->
+        (pin to board) to random.nextDouble()
+    }
+}.toMap()
+\end{lstlisting}
+
+Iduće, potrebno je uzeti generirane težine u obzir prilikom odabira brida kojim će se krenuti. U implementaciji naše šetnje potrebno je samo promijeniti metodu \textit{sample} tako da ona umjesto uniformnog odabira radi \textit{roulette wheel selection}\footnote{\url{https://en.wikipedia.org/wiki/Fitness_proportionate_selection}} nad otežanim bridovima.
+
+U tu svrhu, uvedimo novu, generaliziranu, funkciju \textit{sample} koja će vršiti ruletni odabir nad proizvoljnom listom podataka i odgovarajućom mapom težina.
+
+\begin{lstlisting}
+private fun <T, R, V, U> List<T>.sample(
+        startingElement: R,
+        weights: Map<Pair<V, U>, Double>,
+        combiner: (R, T) -> Pair<V, U>
+): T {
+    val totalWeight = map { weights[combiner(startingElement, it)]!! }.sum()
+    val selectedWeight = random.nextDouble() * totalWeight
+
+    var traversedWeight = 0.0
+    forEach {
+        traversedWeight += weights[combiner(startingElement, it)]!!
+
+        if (traversedWeight >= selectedWeight) {
+            return it
+        }
+    }
+    throw RuntimeException("Roulette wheel selection failed to select an element")
+}
+\end{lstlisting}
+
+Sada je implementacija konkretnih funkcija \textit{sample} za odabir pinova i bridova jednostavna -- dovoljno je pozvati generaliziranu funkciju \textit{sample} s odgovarajućim podacima.
+
+\begin{lstlisting}
+private fun List<Board>.sample(startingPin: Pin, weights: Map<Pair<Pin, Board>, Double>): Board =
+        sample(startingPin, weights) { i, j -> Pair(i, j) }
+
+private fun List<Pin>.sample(startingBoard: Board, weights: Map<Pair<Pin, Board>, Double>): Pin =
+        sample(startingBoard, weights) { i, j -> Pair(j, i) }
+\end{lstlisting}
+
+Konačno, za implementaciju šetnje s pristranosti, dovoljno je promijeniti \textit{sample} pozive. U nastavku dajemo cjelovitu implementaciju metode.
+
+\begin{lstlisting}
+fun weightedRandomWalk(graph: AdjacencyGraph, startingPin: Pin, numberOfSteps: Int, weights: Map<Pair<Pin, Board>, Double>): HashMap<Pin, Int> {
+    val counter = HashMap<Pin, Int>()
+
+    var step = 0
+    var pin = startingPin
+
+    while (step < numberOfSteps) {
+        val board = graph.pinsToBoards[pin].orEmpty().sample(pin, weights)
+        val otherPin = graph.boardsToPins[board]!!.sample(board, weights)
+
+        val oldCount = counter.getOrDefault(otherPin, 0)
+        counter[otherPin] = oldCount + 1
+        pin = otherPin
+        ++step
+    }
+
+    return counter
+}
+\end{lstlisting}
+
+Proširimo i funkciju \textit{main} kako bi mogli izvršiti jednostavan eksperiment sa novom šetnjom.
+
+\begin{lstlisting}
+(...)
+val weights = generateWeights(data.pinsToBoards)
+(...)
+val weightedRandomWalkTime = System.currentTimeMillis()
+System.out.printf("Starting weighted random walk with %d steps%n", NUM_STEPS)
+val weightedRandomWalkResult = weightedRandomWalk(data, startingPin, NUM_STEPS, weights)
+System.out.printf("Done in %d%n", System.currentTimeMillis() - weightedRandomWalkTime)
+weightedRandomWalkResult.printTop(10)
+\end{lstlisting}
+
+Iz ispisa programa vidljivo je da se skup preporučenih objekata znatno promijenio. Gdje je nasumična šetnja u top 10 ponudila čak 7 čvorova sa brojem pogodaka 7, vrh preporuka u pristranoj šetnji je drugačiji - prva dva mjesta zauzimaju čvorovi sa 9 i 8 pogodaka, što je indikator da je šetnja uspješno usmjerena prema zanimljivijim čvorovima.
+
+No, bitno je istaknuti i cijenu ovog proširenja. U šetnji sa 100.000 koraka, vrijeme šetnje je povećano sa 116 milisekundi na 2037 milisekundi, ili otprilike 20 puta.
+
+\begin{center}
+		  \begin{tabular}{ |l|r|r| }
+					 \hline
+					 Metoda & Vrijeme izvršavanja (ms) & Relativno trajanje\\
+					 \hline
+					 Naivna šetnja & 116 & 100\% \\
+					 \hline
+					 Pristrana šetnja & 2037 & 1756\% \\
+					 \hline
+		  \end{tabular}
+\end{center}
 
 \section{Upiti sa više pinova}
 
