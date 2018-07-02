@@ -31,7 +31,7 @@ Pinterest\footnote{\url{https://pinterest.com}} je moderna web usluga koja svoji
 		  \textit{At Pinterest, a primary engineering challenge is helping people discover and do things every day, which means serving the right idea to the right person at the right time.}\footnote{\cite{medium-article}}
 \end{displayquote}
 
-Pinterest je u svojoj srži preporučiteljski sustav te je važno da kao takav može dati korisne preporuke u dovoljno kratkom vremenu kako bi svojim korisnicima ponudio što veću vrijednost. Zbog veličine podataka i vremenskih zahtjeva kojima Pinterest barata, a koje ćemo iznijeti u nastavku, postojeća rješenja pokazuju značajne nedostatke te je Pinterest za svoje potrebe odlučio napraviti vlastiti preporučiteljski sustav, naziva Pixie, koji se pokazao izrazito učinkovitim. Nad njihovim skupom podataka -- bipartitnim grafom od 3 milijarde čvorova povezanih sa 17 milijardi bridova, jedan Pixie poslužitelj može poslužiti 1.200 zahtjeva po sekundi sa latencijom u 99-om centilu unutar 60 milisekundi. S poslovne strane se Pixie također pokazao kao uspjeh jer je povećao i relevantnost preporuka koje se korisnicima nude i time povećao angažman korisnika za do 50\%\footnote{\cite{DBLP:journals/corr/abs-1711-07601}}.
+Pinterest je u svojoj srži preporučiteljski sustav te je važno da kao takav može dati korisne preporuke u dovoljno kratkom vremenu kako bi svojim korisnicima ponudio što veću vrijednost. Zbog veličine podataka i vremenskih zahtjeva kojima Pinterest barata, a koje ćemo iznijeti u nastavku, postojeća rješenja pokazuju značajne nedostatke te je Pinterest za svoje potrebe odlučio napraviti vlastiti preporučiteljski sustav, naziva Pixie, koji se pokazao izrazito učinkovitim. Nad njihovim skupom podataka -- bipartitnim grafom od 3 milijarde čvorova povezanih sa 17 milijardi bridova, jedan Pixie poslužitelj može poslužiti 1.200 zahtjeva po sekundi s latencijom u 99-om centilu unutar 60 milisekundi. S poslovne strane se Pixie također pokazao kao uspjeh jer je povećao i relevantnost preporuka koje se korisnicima nude i time povećao angažman korisnika za do 50\%\footnote{\cite{DBLP:journals/corr/abs-1711-07601}}.
 
 U nastavku dajemo pregled preporučiteljskog sustava Pixie -- problema kojeg on pokušava riješiti, nekolicinu inovativnih pristupa rješavanju tog problema, primjer ostvarenja tih pristupa u programskom jeziku Kotlin\footnote{\url{https://kotlinlang.org}} te rezultate koje to ostvarenje daje.
 
@@ -42,11 +42,11 @@ Opišimo prvo općeniti problem preporučivanja koji pokušavamo riješiti. Mode
 
 Krenimo od sustava koji se sastoji od dva skupa -- skupa korisnika \textit{K} i skupa predmeta \textit{P} s kojima korisnik može međudjelovati. Dodatno, svaki korisnik može za neki predmet iskazati koliko mu je taj predmet zanimljiv, što možemo modelirati funkcijom zanimljivosti $z = K \times P \to \mathbb{R}$ koja za danog korisnika i dani predmet vraća koliko je tom korisniku taj predmet zanimljiv.
 
-Ukoliko za danog korisnika sortiramo skup predmeta po funkciji zanimljivosti, dobivamo listu predmeta poredanih po zanimljivosti za tog korisnika $P_k = sorted(P, z_k)$. Temeljem ove liste korisniku možemo preporučiti novi sadržaj uzimajući, primjerice, prvih 5 elemenata te liste.
+Ako za danog korisnika sortiramo skup predmeta po funkciji zanimljivosti, dobivamo listu predmeta poredanih po zanimljivosti za tog korisnika $P_k = sorted(P, z_k)$. Temeljem ove liste korisniku možemo preporučiti novi sadržaj uzimajući, primjerice, prvih 5 elemenata te liste.
 
 Ovakav jednostavan model pokazuje temeljni zahtjev od preporučiteljskog sustava -- da na temelju poznatih informacija o korisniku može za njega preporučiti relevantan sadržaj. 
 
-No, postoje određeni izazovi kojih je važno biti svjestan. Prvo je nepoznavanje funkcije z -- korisnik će eksplicitno izraziti zanimljivost tek za veoma maleni podskup predmeta. Kako bi mogli ponuditi preporuke, morati ćemo zanimljivost za ostale predmete procijeniti. Drugi bitan izazov je veličina skupa podataka -- $K \times P$ može biti velikih dimenzija, reda veličine $10^6 \times 10^6$ pa nećemo moći naivno obraditi cijeli skup podataka, već će biti nužno usredotočiti se na tek maleni podskup istih.
+No, postoje određeni izazovi kojih je važno biti svjestan. Prvo je nepoznavanje funkcije z -- korisnik će eksplicitno izraziti zanimljivost tek za veoma maleni podskup predmeta. Kako bi mogli ponuditi preporuke, morat ćemo zanimljivost za ostale predmete procijeniti. Drugi bitan izazov je veličina skupa podataka -- $K \times P$ može biti velikih dimenzija, reda veličine $10^6 \times 10^6$ pa nećemo moći naivno obraditi cijeli skup podataka, već će biti nužno usredotočiti se na tek maleni podskup istih.
 
 Postoje razni pristupi rješavanju ovog problema, od čega su možda najpopularniji preporučivanje temeljeno na sadržaju te suradničko filtriranje, koji su također dostupni kao gotovi algoritmi u programskom okviru \textit{Apache Mahout}\footnote{\cite{rovkp-mahout}}.
 
@@ -58,7 +58,7 @@ Pogledajmo sada problem preporučivanja kojeg Pinterest pokušava riješiti. Vid
 
 U Pinterestovom skupu podataka postoje dva tipa entiteta - pin (\textit{pribadača, značka}) i board (\textit{ploča}). Svaki pin može biti povezan s više boardova i svaki board može imati više pinova, tj.\ relacija među njima je oblika N-N.
 
-Te podatke možemo prikazati grafom na način da čvorove predstavljaju pinovi i boardovi, a bridove veze među njima. Kako ne postoji veza pin-pin niti veza board-board, navedeni graf je bipartitan. Kako su veze također dvosmjerne, graf je i neusmjeren.
+Te podatke možemo prikazati grafom tako da čvorove predstavljaju pinovi i boardovi, a bridove veze među njima. Kako ne postoji veza pin-pin niti veza board-board, navedeni graf je bipartitan. Kako su veze također dvosmjerne, graf je i neusmjeren.
 
 \begin{figure}[h]
 	\centering
@@ -78,7 +78,7 @@ Važno je također posebnu pažnju skrenuti i na razmjer podataka kojima Pintere
 
 Također treba istaknuti i vremenske zahtjeve na preporučiteljski sustav -- Pinterestu je važno da se preporuke mogu generirati u stvarnom vremenu, kako korisnik koristi sustav. Zbog toga je važno da izračun preporuka bude brz te je već čekanje od jedne sekunde previše i znatno bi narušilo krajnje korisničko iskustvo.
 
-S ovim svime na umu, vidimo jasnu motivaciju zašto napraviti vlastiti preporučiteljski sustav -- oblik i količina podataka te vremenski zahtjevi nisu prikladni za pristup poput suradničkog filtriranja čije je vrijeme osvježavanja znatno duže i čiji prostorni zahtjevi nisu prikladni za red veličine miljardi.
+S ovim svime na umu, vidimo jasnu motivaciju zašto napraviti vlastiti preporučiteljski sustav -- oblik i količina podataka te vremenski zahtjevi nisu prikladni za pristup poput suradničkog filtriranja čije je vrijeme osvježavanja znatno duže i čiji prostorni zahtjevi nisu prikladni za red veličine milijardi.
 
 \chapter{Rješenje}
 
@@ -108,12 +108,12 @@ No, za uspješan rad algoritma, potrebno je na ovu nasumičnu šetnju dodati jo�
 
 Primijetimo da prethodni algoritam ne uzima u obzir nikakva saznanja o korisniku. Za dva korisnika, $u_1$ i $u_2$, i isti početni pin $p$, preporuka će, ignoriravši nasumičnost šetnje, biti ista. Kako nam je želja dobiti preporuke koje će biti personalizirane za korisnika, potrebno je šetnju \textit{pogurnuti} u pravom smjeru. Prilika za to napraviti je prilikom odabira brida kojim će šetač proći. Umjesto nasumičnog odabira gdje svaki brid ima jednaku vjerojatnost da bude izabran, vjerojatnosti odabira se mogu izraziti kao pripadne težine bridova koje ovise o svojstvima trenutnog korisnika i predmeta koji se razmatra.
 
-\section{Upiti sa više pinova}
+\section{Upiti s više pinova}
 \label{multipin}
 
 Kako bi se korisnika još bolje modeliralo, uz trenutni pin kojeg korisnik pregledava možemo uzeti u obzir i povijest pinova koje je korisnik pregledavao. Tako umjesto jednog upita q izvršimo skup upita Q i za svakog izračunamo pripadni brojač $V_q$.
 
-Na kraju je potrebno dobivene brojače kombinirati. Brojače bi mogli kombinirati običnom sumom ili prosjekom, no nije svaki upit jednak. Naime, ako je početni pin jako povezan (ako se radi o čvoru visokog stupnja), biti će potrebno napraviti više koraka kako bi značajnost brojača bila jednaka onom dobivenom kretanjem od čvora niskog stupnja. U suprotnom bi preporuke generirane čvorovima niskog stupnja dominirale nad preporukama čvorova visokih stupanja, iako su potonji zbog svoje veće povezanosti u grafu značajniji.
+Na kraju je potrebno dobivene brojače kombinirati. Brojače bi mogli kombinirati običnom sumom ili prosjekom, no nije svaki upit jednak. Naime, ako je početni pin jako povezan (ako se radi o čvoru visokog stupnja), bit će potrebno napraviti više koraka kako bi značajnost brojača bila jednaka onom dobivenom kretanjem od čvora niskog stupnja. U suprotnom bi preporuke generirane čvorovima niskog stupnja dominirale nad preporukama čvorova visokih stupanja, iako su potonji zbog svoje veće povezanosti u grafu značajniji.
 
 Kako bi se riješio ovaj problem, za svaki upit q računa se faktor razmjera (\textit{scaling factor}) na slijedeći način:
 
@@ -146,7 +146,7 @@ Za potrebe ilustracije, generirali smo nasumičan skup od 40 čvorova stupnja iz
 \section{Poticanje pinova koji se pojavljuju više puta}
 \label{boosting}
 
-Nakon što smo odredili duljine šetnji, preostaje pitanje kako na kraju kombinirati dobivene $V_q$ u jedan konačni brojač na temelju kojeg ćemo generirati preporuke. Intuicija je da su oni pinovi koji su povezani sa više pinova u Q također i relevantniji krajnjem korisniku, tj.\ oni pinovi koje je više različitih šetnji posjetilo su značajniji za konačni rezultat. Jednostavnim zbrajanjem $V_q$ bi izgubili ovu informaciju pa umjesto toga ukupan broj \textit{pogodaka} za pin p računamo ovako:
+Nakon što smo odredili duljine šetnji, preostaje pitanje kako na kraju kombinirati dobivene $V_q$ u jedan konačni brojač na temelju kojeg ćemo generirati preporuke. Intuicija je da su oni pinovi koji su povezani s više pinova u Q i relevantniji krajnjem korisniku, tj.\ oni pinovi koje je više različitih šetnji posjetilo su značajniji za konačni rezultat. Jednostavnim zbrajanjem $V_q$ bi izgubili ovu informaciju pa umjesto toga ukupan broj \textit{pogodaka} za pin p računamo ovako:
 
 \begin{centering}
 		  $$ V[p] = (\sum_{q \in Q}{\sqrt{V_q[p]}})^2 $$
@@ -160,11 +160,11 @@ Na ovaj način će pinovi koji se pojavljuju u više šetnji biti \textit{nagra�
 
 Primijetimo da šetnje imaju konstantnu duljinu koja ovisi o početnom čvoru. No, možemo postići značajnu uštedu vremena ako odlučimo stati sa šetnjom ranije ako se to čini kao dobra ideja.
 
-Naivan kriterij za zaustavljanje može biti konvergencija rješenja - top N kandidata se nije promijenilo u zadnjih k koraka. No, kako praćenje te informacije može biti skupo (pa čak i skuplje od same šetnje), Pixie uvodi jednostavnu heuristiku - šetnju zaustavljamo kada je bar $n_p$ pinova posjećeno bar $n_v$ puta. Brojevi $n_p$ i $n_v$ direktno utječu na kvalitetu rezultata i trajanje algoritma pa ih je potrebno pažljivo odabrati, a njihov odabir ovisi o skupu podataka koji se obrađuje. Primjera radi, Pinterest na svom skupu podataka za $n_p=2.000$ i $n_v=4$ postiže sličnost od 84\% sa rezultatom bez ranog zaustavljanja, a pritom smanjuje vrijeme izvršavanja upita na trećinu.
+Naivan kriterij za zaustavljanje može biti konvergencija rješenja - top N kandidata se nije promijenilo u zadnjih k koraka. No, kako praćenje te informacije može biti skupo (pa čak i skuplje od same šetnje), Pixie uvodi jednostavnu heuristiku - šetnju zaustavljamo kada je bar $n_p$ pinova posjećeno bar $n_v$ puta. Brojevi $n_p$ i $n_v$ direktno utječu na kvalitetu rezultata i trajanje algoritma pa ih je potrebno pažljivo odabrati, a njihov odabir ovisi o skupu podataka koji se obrađuje. Primjera radi, Pinterest na svom skupu podataka za $n_p=2.000$ i $n_v=4$ postiže sličnost od 84\% s rezultatom bez ranog zaustavljanja, a pritom smanjuje vrijeme izvršavanja upita na trećinu.
 
 \section{Smanjivanje grafa}
 
-Konačno, kao veoma bitan korak pokazalo se i smanjivanje samog grafa (\textit{graph pruning}) kao oblik predobrade podataka. Sam postupak uvelike ovisi o skupu podataka nad kojim se primijenjuje. U Pinterestovom slučaju svelo se na heuristiku uklanjanja čvorova sa visokom entropijom te, za pojedinačne pinove, uklanjanja onih bridova koji vode na boardove koji imaju najmanju sličnost sa danim pinom.
+Konačno, kao veoma bitan korak pokazalo se i smanjivanje samog grafa (\textit{graph pruning}) kao oblik predobrade podataka. Sam postupak uvelike ovisi o skupu podataka nad kojim se primjenjuje. U Pinterestovom slučaju svelo se na heuristiku uklanjanja čvorova s visokom entropijom te, za pojedinačne pinove, uklanjanja onih bridova koji vode na boardove koji imaju najmanju sličnost s danim pinom.
 
 U Pinterestovom slučaju ovaj se postupak itekako isplatio -- sa 7 milijardi čvorova i 100 milijardi bridova, graf je smanjen na 3 milijarde čvorova (43\%) i 17 milijardi bridova (17\%). Dodatno, smanjenje grafa je također dovelo i do poboljšanja u kvaliteti preporuka u iznosu od 58\%, što je posljedica primijenjene heuristike koja sama po sebi uklanja manje relevantne bridove, koji onda neće ni biti posjećeni.
 
@@ -207,7 +207,7 @@ const val NUM_EDGES = 17 * 10e4.toInt()
 const val NUM_STEPS = 100000
 \end{lstlisting}
 
-Definirajmo i pomoćnu \textit{Random} instancu sa definiranom \textit{seed} vrijednošću kako bi naši eksperimenti bili deterministični.
+Definirajmo i pomoćnu \textit{Random} instancu s definiranom \textit{seed} vrijednošću kako bi naši eksperimenti bili deterministični.
 
 \begin{lstlisting}
 val random = Random(9932L)
@@ -237,7 +237,7 @@ private fun Counter.printTop(k: Int) = top(k).forEach {
 }
 \end{lstlisting}
 
-Konačno, definirajmo pomoćnu funkciju koja će generirati skup podataka nad kojim ćemo izvršiti algoritam. Generirati ćemo potreban broj pinova i boardova i zatim ih na nasumičan način spojiti bridovima. Važno je napomenuti da bi u ovom postupku zbog vjerodostojnosti simulacije bilo korisno modelirati razdiobu histograma stupnja čvorova tako da ona odgovara stvarnim podacima, ali to u ovom primjeru preskačemo jer nemamo pristup toj informaciji o stvarnim podacima.
+Konačno, definirajmo pomoćnu funkciju koja će generirati skup podataka nad kojim ćemo izvršiti algoritam. Generirat ćemo potreban broj pinova i boardova i zatim ih na nasumičan način spojiti bridovima. Važno je napomenuti da bi u ovom postupku zbog vjerodostojnosti simulacije bilo korisno modelirati razdiobu histograma stupnja čvorova tako da ona odgovara stvarnim podacima, ali to u ovom primjeru preskačemo jer nemamo pristup toj informaciji o stvarnim podacima.
 
 \begin{lstlisting}
 fun generateData(): AdjacencyGraph {
@@ -402,7 +402,7 @@ fun weightedRandomWalk(graph: AdjacencyGraph, startingPin: Pin, numberOfSteps: I
 }
 \end{lstlisting}
 
-Proširimo i funkciju \textit{main} kako bi mogli izvršiti jednostavan eksperiment sa novom šetnjom.
+Proširimo i funkciju \textit{main} kako bi mogli izvršiti jednostavan eksperiment s novom šetnjom.
 
 \begin{lstlisting}
 (...)
@@ -415,7 +415,7 @@ System.out.printf("Done in %d%n", System.currentTimeMillis() - weightedRandomWal
 weightedRandomWalkResult.printTop(10)
 \end{lstlisting}
 
-Iz ispisa programa vidljivo je da se skup preporučenih objekata znatno promijenio. Gdje je nasumična šetnja u top 10 ponudila čak 7 čvorova sa brojem pogodaka 7, vrh preporuka u pristranoj šetnji je drugačiji - prva dva mjesta zauzimaju čvorovi sa 9 i 8 pogodaka, što je indikator da je šetnja uspješno usmjerena prema zanimljivijim čvorovima.
+Iz ispisa programa vidljivo je da se skup preporučenih objekata znatno promijenio. Gdje je nasumična šetnja u top 10 ponudila čak 7 čvorova s brojem pogodaka 7, vrh preporuka u pristranoj šetnji je drugačiji - prva dva mjesta zauzimaju čvorovi s 9 i 8 pogodaka, što je indikator da je šetnja uspješno usmjerena prema zanimljivijim čvorovima.
 
 No, bitno je istaknuti i cijenu ovog proširenja. U šetnji sa 100.000 koraka, vrijeme šetnje je povećano sa 116 milisekundi na 2037 milisekundi, ili otprilike 20 puta.
 
@@ -431,9 +431,9 @@ No, bitno je istaknuti i cijenu ovog proširenja. U šetnji sa 100.000 koraka, v
 		  \end{tabular}
 \end{center}
 
-\section{Upiti sa više pinova}
+\section{Upiti s više pinova}
 
-Pokušajmo sada napraviti upit sa više pinova, gdje svaki pin ima određenu težinu. Podsjetimo se, na ovaj način Pixie modelira korisnikovo ponašanje i interakciju s pinovima u vremenu - stariji pinovi dobivaju manju težinu.
+Pokušajmo sada napraviti upit s više pinova, gdje svaki pin ima određenu težinu. Podsjetimo se, na ovaj način Pixie modelira korisnikovo ponašanje i interakciju s pinovima u vremenu - stariji pinovi dobivaju manju težinu.
 
 Generirajmo upit kao listu parova (Pin, Double) -- početnih pinova i odgovarajućih težina.
 
@@ -563,7 +563,7 @@ System.out.printf("Done in %d%n", System.currentTimeMillis() - earlyStopWalkTime
 earlyStopWalkResult.printTop(10)
 \end{lstlisting}
 
-Iako je ovim parametrima moguće značajno utjecati na vrijeme izvršavanja algoritma, zbog nasumičnosti generiranog skupa podataka nismo u mogućnosti ocijeniti kvalitetu preporuka u odnosu na inačicu algoritma bez ranog zaustavljanja.
+Iako je ovim parametrima moguće značajno utjecati na vrijeme izvršavanja algoritma, zbog nasumičnosti generiranog skupa podataka ne možemo ocijeniti kvalitetu preporuka u odnosu na inačicu algoritma bez ranog zaustavljanja.
 
 \chapter{Rezultat}
 
@@ -575,7 +575,7 @@ Ono što se najviše istaknulo prilikom implementacije algoritama je jednostavno
 
 Iako je Pinterest za svoje potrebe implementirao vlastite, optimirane strukture podataka za ubrzavanje nasumičnog šetača, iz implementacije je vidljivo kako je razumne performanse moguće postići koristeći i ugrađene Java kolekcije, što čini ovaj model dobrim odabirom za brzi prototip preporučiteljskog sustava za manje skupove podataka.
 
-Konačno, važno je napomenuti da Pixie rješava problem preporučivanja za veoma specifičan i specijaliziran problem te kao takav ne može riješiti isti skup problema kao što to može algoritam poput suradničkog filtriranja. No, ukoliko problem odgovara Pinterestovom, Pixie se čini kao dobar odabir preporučiteljskog sustava.
+Konačno, važno je napomenuti da Pixie rješava problem preporučivanja za veoma specifičan i specijaliziran problem te kao takav ne može riješiti isti skup problema kao što to može algoritam poput suradničkog filtriranja. No, ako problem odgovara Pinterestovom, Pixie se čini kao dobar odabir preporučiteljskog sustava.
 
 \chapter{Zaključak}
 
