@@ -118,6 +118,41 @@ fun weightedRandomWalk(graph: AdjacencyGraph, startingPin: Pin, numberOfSteps: I
     return counter
 }
 
+fun weightedRandomWalkWithEarlyStop(
+        graph: AdjacencyGraph,
+        startingPin: Pin,
+        numberOfSteps: Int,
+        weights: Map<Pair<Pin, Board>, Double>,
+        earlyStopPinCount: Int,
+        earlyStopVisitCount: Int
+): Counter {
+    val counter = HashMap<Pin, Int>()
+
+    var step = 0
+    var pin = startingPin
+    var earlyStopVisitedPinCount = 0
+
+    while (step < numberOfSteps) {
+        val board = graph.pinsToBoards[pin].orEmpty().sample(pin, weights)
+        val otherPin = graph.boardsToPins[board]!!.sample(board, weights)
+
+        val oldCount = counter.getOrDefault(otherPin, 0)
+        counter[otherPin] = oldCount + 1
+
+        if (counter[otherPin] == earlyStopVisitCount) {
+            ++earlyStopVisitedPinCount
+            if (earlyStopVisitedPinCount == earlyStopPinCount) {
+                break
+            }
+        }
+
+        pin = otherPin
+        ++step
+    }
+
+    return counter
+}
+
 fun weightedRandomWalk(graph: AdjacencyGraph, startingPins: List<Pair<Pin, Double>>, numberOfSteps: Int, weights: Map<Pair<Pin, Board>, Double>): List<Counter> {
     val maxDegree = graph.pinsToBoards.map { it.value.size }.max()!!
 
@@ -172,4 +207,12 @@ fun main(args: Array<String>) {
 
     System.out.printf("Combined result%n")
     multiplePinWalkResult.combine().printTop(5)
+
+    val earlyStopWalkTime = System.currentTimeMillis()
+    val earlyStopPinCount = 5000
+    val earlyStopVisitCount = 2
+    System.out.printf("Starting early stop walk with %d steps, n_p = %d and n_v = %d%n", NUM_STEPS, earlyStopPinCount, earlyStopVisitCount)
+    val earlyStopWalkResult = weightedRandomWalkWithEarlyStop(data, startingPin, NUM_STEPS, weights, earlyStopPinCount, earlyStopVisitCount)
+    System.out.printf("Done in %d%n", System.currentTimeMillis() - earlyStopWalkTime)
+    earlyStopWalkResult.printTop(10)
 }

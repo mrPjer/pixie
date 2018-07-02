@@ -512,7 +512,58 @@ Rezultat je veoma zanimljiv - dobili smo nove top rezultate s ukupnim rezultatom
 
 \section{Rano zaustavljanje}
 
-Konačno nam preostaje implementirati mehanizam ranog zaustavljanja opisan u \ref{early-stop}.
+Konačno nam preostaje implementirati mehanizam ranog zaustavljanja opisan u \ref{early-stop}. Kako bi to izveli, dovoljno je u šetnju dodati jedan brojač koji će indicirati koliko je pinova do sad bilo posjećeno više od $n_v$ puta. Jednom kada taj brojač dosegne $n_p$, šetnju možemo prekinuti. Svaki put kada posjetimo pin inkrementiramo brojač rezultata te u ovom trenutku možemo provjeriti je li broj posjeta za taj pin dosegao $n_v$. Ako je, povećamo novi brojač.
+
+\begin{lstlisting}
+fun weightedRandomWalkWithEarlyStop(
+        graph: AdjacencyGraph,
+        startingPin: Pin,
+        numberOfSteps: Int,
+        weights: Map<Pair<Pin, Board>, Double>,
+        earlyStopPinCount: Int,
+        earlyStopVisitCount: Int
+): Counter {
+    val counter = HashMap<Pin, Int>()
+
+    var step = 0
+    var pin = startingPin
+    var earlyStopVisitedPinCount = 0
+
+    while (step < numberOfSteps) {
+        val board = graph.pinsToBoards[pin].orEmpty().sample(pin, weights)
+        val otherPin = graph.boardsToPins[board]!!.sample(board, weights)
+
+        val oldCount = counter.getOrDefault(otherPin, 0)
+        counter[otherPin] = oldCount + 1
+
+        if (counter[otherPin] == earlyStopVisitCount) {
+            ++earlyStopVisitedPinCount
+            if (earlyStopVisitedPinCount == earlyStopPinCount) {
+                break
+            }
+        }
+
+        pin = otherPin
+        ++step
+    }
+
+    return counter
+}
+\end{lstlisting}
+
+Konačno, možemo izvršiti i jednu takvu šetnju i ispisati rezultat preporuke.
+
+\begin{lstlisting}
+val earlyStopWalkTime = System.currentTimeMillis()
+val earlyStopPinCount = 5000
+val earlyStopVisitCount = 2
+System.out.printf("Starting early stop walk with %d steps, n_p = %d and n_v = %d%n", NUM_STEPS, earlyStopPinCount, earlyStopVisitCount)
+val earlyStopWalkResult = weightedRandomWalkWithEarlyStop(data, startingPin, NUM_STEPS, weights, earlyStopPinCount, earlyStopVisitCount)
+System.out.printf("Done in %d%n", System.currentTimeMillis() - earlyStopWalkTime)
+earlyStopWalkResult.printTop(10)
+\end{lstlisting}
+
+Iako je ovim parametrima moguće značajno utjecati na vrijeme izvršavanja algoritma, zbog nasumičnosti generiranog skupa podataka nismo u mogućnosti ocijeniti kvalitetu preporuka u odnosu na inačicu algoritma bez ranog zaustavljanja.
 
 \chapter{Rezultat}
 
