@@ -1,8 +1,10 @@
 import java.util.*
-import kotlin.collections.HashSet
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
-typealias Pin = Any
-typealias Board = Any
+data class Pin(val id: Int)
+data class Board(val id: Int)
+typealias Counter = Map<Pin, Int>
 
 data class Edge(
         val pin: Pin,
@@ -15,43 +17,66 @@ data class NaiveGraph(
         val edges: Set<Edge>
 )
 
-data class PinToBoard(
-        val pin: Pin,
-        val board: Board
-)
-
-data class BoardToPin(
-        val board: Board,
-        val pin: Pin
-)
-
 data class AdjacencyGraph(
-        val pinsToEdges: Set<PinToBoard>,
-        val boardsToPins: Set<BoardToPin>
+        val pins: List<Pin>,
+        val boards: List<Board>,
+        val pinsToBoards: Map<Pin, List<Board>>,
+        val boardsToPins: Map<Board, List<Pin>>
 )
 
 const val NUM_PINS = 2 * 10e4.toInt()
 const val NUM_BOARDS = 1 * 10e4.toInt()
 const val NUM_EDGES = 17 * 10e4.toInt()
+const val NUM_STEPS = 100000
 
 val random = Random(9932L)
 
 fun generateData(): AdjacencyGraph {
-    val pins = (1..NUM_PINS).map { Pin() }
-    val boards = (1..NUM_BOARDS).map { Board() }
+    val pins = (1..NUM_PINS).map { Pin(it) }
+    val boards = (1..NUM_BOARDS).map { Board(it) }
 
-    val pinsToBoards = HashSet<PinToBoard>(NUM_EDGES)
-    val boardsToPins = HashSet<BoardToPin>(NUM_EDGES)
+    val pinsToBoards = HashMap<Pin, MutableList<Board>>(NUM_EDGES)
+    val boardsToPins = HashMap<Board, MutableList<Pin>>(NUM_EDGES)
 
     (1..NUM_EDGES).forEach {
-        val pin = pins[random.nextInt(pins.size)]
-        val board = boards[random.nextInt(boards.size)]
+        val pin = pins.sample()
+        val board = boards.sample()
 
-        pinsToBoards.add(PinToBoard(pin, board))
-        boardsToPins.add(BoardToPin(board, pin))
+        pinsToBoards.computeIfAbsent(pin) { ArrayList() }
+        boardsToPins.computeIfAbsent(board) { ArrayList() }
+
+        pinsToBoards[pin]!!.add(board)
+        boardsToPins[board]!!.add(pin)
     }
 
-    return AdjacencyGraph(pinsToBoards, boardsToPins)
+    return AdjacencyGraph(pins, boards, pinsToBoards, boardsToPins)
+}
+
+private fun <T> List<T>.sample() = this[random.nextInt(size)]
+private fun Counter.top(k: Int) = this
+        .toList()
+        .sortedByDescending { it.second }
+        .take(k)
+
+private fun Counter.printTop(k: Int) = top(k).forEach { System.out.printf(" %s - %d%n", it.first, it.second) }
+
+fun simpleRandomWalk(graph: AdjacencyGraph, startingPin: Pin, numberOfSteps: Int): Counter {
+    val counter = HashMap<Pin, Int>()
+
+    var step = 0
+    var pin = startingPin
+
+    while (step < numberOfSteps) {
+        val board = graph.pinsToBoards[pin].orEmpty().sample()
+        val otherPin = graph.boardsToPins[board]!!.sample()
+
+        val oldCount = counter.getOrDefault(otherPin, 0)
+        counter[otherPin] = oldCount + 1
+        pin = otherPin
+        ++step
+    }
+
+    return counter
 }
 
 fun main(args: Array<String>) {
@@ -59,4 +84,14 @@ fun main(args: Array<String>) {
     System.out.printf("Generating dataset with %d pins, %d boards and %d edges%n", NUM_PINS, NUM_BOARDS, NUM_EDGES)
     val data = generateData()
     System.out.printf("Done in %d%n", System.currentTimeMillis() - start)
+
+    val startingPin = data.pinsToBoards.keys.toList().sample()
+
+    System.out.printf("Starting pin is %s%n", startingPin)
+
+    val randomWalkTime = System.currentTimeMillis()
+    System.out.printf("Starting simple random walk with %d steps%n", NUM_STEPS)
+    val randomWalkResult = simpleRandomWalk(data, startingPin, NUM_STEPS)
+    System.out.printf("Done in %d%n", System.currentTimeMillis() - randomWalkTime)
+    randomWalkResult.printTop(10)
 }
