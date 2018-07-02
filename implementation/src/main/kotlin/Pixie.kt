@@ -134,6 +134,10 @@ fun weightedRandomWalk(graph: AdjacencyGraph, startingPins: List<Pair<Pin, Doubl
     }
 }
 
+private fun List<Counter>.combine(): Counter = flatMap { it.keys }
+        .map { pin -> pin to Math.pow(this.map { Math.sqrt(it.getOrDefault(pin, 0).toDouble()) }.sum(), 2.0).toInt() }
+        .toMap()
+
 fun main(args: Array<String>) {
     val start = System.currentTimeMillis()
     System.out.printf("Generating dataset with %d pins, %d boards and %d edges%n", NUM_PINS, NUM_BOARDS, NUM_EDGES)
@@ -165,4 +169,7 @@ fun main(args: Array<String>) {
     val multiplePinWalkResult = weightedRandomWalk(data, multiplePinQuery, NUM_STEPS, weights)
     System.out.printf("Done in %d%n", System.currentTimeMillis() - multiplePinWalkTime)
     multiplePinWalkResult.forEach { it.printTop(3); System.out.println() }
+
+    System.out.printf("Combined result%n")
+    multiplePinWalkResult.combine().printTop(5)
 }
