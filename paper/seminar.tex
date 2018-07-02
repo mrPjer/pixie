@@ -2,7 +2,12 @@
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{csquotes}
+\usepackage{listings}
+\usepackage{courier}
 \graphicspath{{slike/}}
+
+\lstset{basicstyle=\footnotesize\ttfamily,breaklines=true}
+\lstset{numbers=left,frame=single}
 
 \begin{document}
 
@@ -103,7 +108,7 @@ No, za uspješan rad algoritma, potrebno je na ovu nasumičnu šetnju dodati jo�
 
 Primijetimo da prethodni algoritam ne uzima u obzir nikakva saznanja o korisniku. Za dva korisnika, $u_1$ i $u_2$, i isti početni pin $p$, preporuka će, ignoriravši nasumičnost šetnje, biti ista. Kako nam je želja dobiti preporuke koje će biti personalizirane za korisnika, potrebno je šetnju \textit{pogurnuti} u pravom smjeru. Prilika za to napraviti je prilikom odabira brida kojim će šetač proći. Umjesto nasumičnog odabira gdje svaki brid ima jednaku vjerojatnost da bude izabran, vjerojatnosti odabira se mogu izraziti kao pripadne težine bridova koje ovise o svojstvima trenutnog korisnika i predmeta koji se razmatra.
 
-\section{Upiti sa više pinova i pripadnim težinama}
+\section{Upiti sa više pinova}
 
 Kako bi se korisnika još bolje modeliralo, uz trenutni pin kojeg korisnik pregledava možemo uzeti u obzir i povijest pinova koje je korisnik pregledavao. Tako umjesto jednog upita q izvršimo skup upita Q i za svakog izračunamo pripadni brojač $V_q$.
 
@@ -162,9 +167,181 @@ U Pinterestovom slučaju ovaj se postupak itekako isplatio -- sa 7 milijardi čv
 
 \chapter{Ostvarenje}
 
+U nastavku opisujemo jednostavnu implementaciju osnovnih načela preporučiteljskog sustava Pixie u programskom jeziku Kotlin.
+
+\section{Osnovne strukture podataka}
+
+Definirajmo prvo osnovne strukture podataka koje ćemo koristiti. Pinove i boardove ćemo predstaviti jednim brojem kako bi ih kasnije mogli pratiti.
+
+\begin{lstlisting}
+data class Pin(val id: Int)
+data class Board(val id: Int)
+\end{lstlisting}
+
+Također definirajmo i brojač koji će biti rezultat šetnji kao preslikavanje iz Pina u broj posjeta tog Pina.
+
+\begin{lstlisting}
+typealias Counter = Map<Pin, Int>
+\end{lstlisting}
+
+Kako će naš algoritam većinu vremena provesti šetajući između čvorova, definirajmo graf tako da on, uz pinove i boardove, sadrži i mapiranja koja opisuju povezivanja među njima. Iako nam uređaj nije bitan, mapiranja definiramo kao \textit{List} umjesto kao \textit{Set} jer nam je za šetnju potrebna mogućnost nasumičnog pristupa elementima.
+
+\begin{lstlisting}
+data class AdjacencyGraph(
+        val pins: List<Pin>,
+        val boards: List<Board>,
+        val pinsToBoards: Map<Pin, List<Board>>,
+        val boardsToPins: Map<Board, List<Pin>>
+)
+\end{lstlisting}
+
+Definirajmo i pomoćne konstante koje će predstavljati parametre našeg generiranog skupa podataka te osnovnog broja koraka šetnje. Broj boardova, pinova i bridova biramo u jednakom omjeru kao što se nalazi u Pinterestovom reduciranom skupu podataka, ali biramo brojeve nekoliko redova veličina manje kako bi uštedjeli na vremenu potrebnom za generiranje i evaluiranje podataka.
+
+\begin{lstlisting}
+const val NUM_PINS = 2 * 10e4.toInt()
+const val NUM_BOARDS = 1 * 10e4.toInt()
+const val NUM_EDGES = 17 * 10e4.toInt()
+const val NUM_STEPS = 100000
+\end{lstlisting}
+
+Definirajmo i pomoćnu \textit{Random} instancu sa definiranom \textit{seed} vrijednošću kako bi naši eksperimenti bili deterministični.
+
+\begin{lstlisting}
+val random = Random(9932L)
+\end{lstlisting}
+
+Nadalje, definirajmo nekoliko pomoćnih funkcija. Prvo, funkcija za nasumičan odabir elementa iz liste.
+
+\begin{lstlisting}
+private fun <T> List<T>.sample() = this[random.nextInt(size)]
+\end{lstlisting}
+
+Zatim definirajmo funkciju za dohvat top k elemenata iz brojača.
+
+\begin{lstlisting}
+private fun Counter.top(k: Int) = this
+        .toList()
+        .sortedByDescending { it.second }
+        .take(k)
+\end{lstlisting}
+
+Te, nastavno, funkciju za ispis top k elemenata brojača.
+
+\begin{lstlisting}
+private fun Counter.printTop(k: Int) = top(k).forEach {
+		  System.out.printf(" %s - %d%n",
+		  	it.first, it.second)
+}
+\end{lstlisting}
+
+		  Konačno, definirajmo pomoćnu funkciju koja će generirati skup podataka nad kojim ćemo izvršiti algoritam. Generirati ćemo potreban broj pinova i boardova i zatim ih na nasumičan način spojiti bridovima. Važno je napomenuti da bi u ovom postupku zbog vjernosti simulacije bilo korisno modelirati razdiobu histograma stupnja čvorova, ali to u ovom primjeru preskačemo.
+
+\begin{lstlisting}
+fun generateData(): AdjacencyGraph {
+    val pins = (1..NUM_PINS).map { Pin(it) }
+    val boards = (1..NUM_BOARDS).map { Board(it) }
+
+    val pinsToBoards = HashMap<Pin, MutableList<Board>>(NUM_EDGES)
+    val boardsToPins = HashMap<Board, MutableList<Pin>>(NUM_EDGES)
+
+    (1..NUM_EDGES).forEach {
+        val pin = pins.sample()
+        val board = boards.sample()
+
+        pinsToBoards.computeIfAbsent(pin) { ArrayList() }
+        boardsToPins.computeIfAbsent(board) { ArrayList() }
+
+        pinsToBoards[pin]!!.add(board)
+        boardsToPins[board]!!.add(pin)
+    }
+
+    return AdjacencyGraph(pins, boards, pinsToBoards, boardsToPins)
+}
+\end{lstlisting}
+
+\section{Jednostavna nasumična šetnja}
+
+Implementirajmo sad običnu nasumičnu šetnju nad danim grafom. Funkcija kao parametar prima skup podataka, početni pin te gornji broj koraka, a kao rezultat vraća popunjeni brojač.
+
+\begin{lstlisting}
+fun simpleRandomWalk(
+	graph: AdjacencyGraph,
+	startingPin: Pin,
+	numberOfSteps: Int
+): Counter {
+    val counter = HashMap<Pin, Int>()
+
+    var step = 0
+    var pin = startingPin
+
+    while (step < numberOfSteps) {
+        val board = graph.pinsToBoards[pin].orEmpty().sample()
+        val otherPin = graph.boardsToPins[board]!!.sample()
+
+        val oldCount = counter.getOrDefault(otherPin, 0)
+        counter[otherPin] = oldCount + 1
+        pin = otherPin
+        ++step
+    }
+
+    return counter
+}
+\end{lstlisting}
+
+Sada možemo pokrenuti jednostavan eksperiment definiranjem funkcije \textit{main}.
+
+\begin{lstlisting}
+fun main(args: Array<String>) {
+    val start = System.currentTimeMillis()
+    System.out.printf("Generating dataset with %d pins, %d boards and %d edges%n", NUM_PINS, NUM_BOARDS, NUM_EDGES)
+    val data = generateData()
+    System.out.printf("Done in %d%n", System.currentTimeMillis() - start)
+
+    val startingPin = data.pinsToBoards.keys.toList().sample()
+
+    System.out.printf("Starting pin is %s%n", startingPin)
+
+    val randomWalkTime = System.currentTimeMillis()
+    System.out.printf("Starting simple random walk with %d steps%n", NUM_STEPS)
+    val randomWalkResult = simpleRandomWalk(data, startingPin, NUM_STEPS)
+    System.out.printf("Done in %d%n", System.currentTimeMillis() - randomWalkTime)
+    randomWalkResult.printTop(10)
+}
+\end{lstlisting}
+
+Izvršavanjem nasumične šetnje mijenjajući NUM\_STEPS dolazimo do slijedećih rezultata:
+
+\begin{center}
+		  \begin{tabular}{ |r|r| }
+					 \hline
+					 N & Vrijeme izvršavanja (ms) \\
+					 \hline
+					 1000 & 3 \\
+					 \hline
+					 10000 & 17 \\
+					 \hline
+					 100000 & 137 \\
+					 \hline
+		  \end{tabular}
+\end{center}
+
+Vidljivo je da vrijeme izvršavanja raste otprilike linearno, što je i očekivano. Također vidimo i da je gornja granica za broj koraka šetnje reda veličine $10^5$. Sve više od toga bi trajalo predugo za preporuke u stvarnom vremenu. 
+
+\section{Dodavanje naklonosti nasumičnoj šetnji}
+
+\section{Upiti sa više pinova}
+
+\section{Poticanje pinova koji se pojavljuju više puta}
+
+\section{Rano zaustavljanje}
+
 \chapter{Rezultat}
 
 \chapter{Zaključak}
+
+Preporučiteljski sustav Pixie donosi par novih i zanimljivih ideja u svijet preporučiteljskih sustava. Pinterest je kreiranjem ovog sustava uspio znatno poboljšati performanse i kvalitetu preporuka svoje usluge te povećati vrijednost koju daje korisnicima.
+
+Kao što je pokazano, implementacija osnovnih načela preporučiteljskog sustava Pixie prilično je jednostavna. No, za reprodukciju cijelog sustava nam ipak nedostaju vrijedno znanje i podaci koje Pinterest posjeduje. S druge strane, Pixie nam daje odličan uvid u optimirano rješenje specifične inačice poznatog problema.
 
 \bibliography{literatura}
 \bibliographystyle{fer}
