@@ -77,7 +77,7 @@
 \newcommand{\strzavrsni}{ZAVR\v{S}NI RAD br}
 \newcommand{\strdiplomski}{DIPLOMSKI RAD br}
 \newcommand{\strseminar}{SEMINAR}
-\newcommand{\strvoditelj}{Voditelj}
+\newcommand{\strvoditelj}{Kolegij}
 \newcommand{\strsijecanj}{sije\v{c}anj}
 \newcommand{\strveljaca}{velja\v{c}a}
 \newcommand{\strozujak}{o\v{z}ujak}
