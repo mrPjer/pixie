@@ -6,17 +6,6 @@ data class Pin(val id: Int)
 data class Board(val id: Int)
 typealias Counter = Map<Pin, Int>
 
-data class Edge(
-        val pin: Pin,
-        val board: Board
-)
-
-data class NaiveGraph(
-        val pins: Set<Pin>,
-        val boards: Set<Board>,
-        val edges: Set<Edge>
-)
-
 data class AdjacencyGraph(
         val pins: List<Pin>,
         val boards: List<Board>,
@@ -52,6 +41,12 @@ fun generateData(): AdjacencyGraph {
     return AdjacencyGraph(pins, boards, pinsToBoards, boardsToPins)
 }
 
+fun generateWeights(pinToBoards: Map<Pin, List<Board>>) = pinToBoards.flatMap { (pin, boards) ->
+    boards.map { board ->
+        (pin to board) to random.nextDouble()
+    }
+}.toMap()
+
 private fun <T> List<T>.sample() = this[random.nextInt(size)]
 private fun Counter.top(k: Int) = this
         .toList()
@@ -83,6 +78,7 @@ fun main(args: Array<String>) {
     val start = System.currentTimeMillis()
     System.out.printf("Generating dataset with %d pins, %d boards and %d edges%n", NUM_PINS, NUM_BOARDS, NUM_EDGES)
     val data = generateData()
+    val weights = generateWeights(data.pinsToBoards)
     System.out.printf("Done in %d%n", System.currentTimeMillis() - start)
 
     val startingPin = data.pinsToBoards.keys.toList().sample()
