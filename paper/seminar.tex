@@ -567,6 +567,16 @@ Iako je ovim parametrima moguće značajno utjecati na vrijeme izvršavanja algo
 
 \chapter{Rezultat}
 
+Pixie se u Pinterestovom slučaju pokazao kao odličan proizvod. Prijavljuju odlične performanse -- 1.200 upita po sekundi s latencijom unutar 60 milisekundi te značajna poboljšanja u kvaliteti generiranih prijedloga i posljedičnog povećanog angažmana korisnika -- koji mjeri između 13\% i 48\%. Pinterest kao važno svojstvo ističe i mogućnost obrade i generiranja preporuka na jednom računalu (AWS r3.8xlarge instanca sa 244GB RAM), držeći cijeli podatkovni skup u memoriji, što cijelu arhitekturu čini znatno jednostavnijom od prijašnje arhitekture temeljene na raspodijeljenom okviru Apache Hadoop.
+
+Prilikom izrade vlastitih ostvarenja osnovnih načela preporučiteljskog sustava Pixie vidjeli smo da je uistinu svaki inovativan korak kojeg Pixie uvodi uveo značajnu razliku u rezultantnom skupu podataka. No, za kvalitetniju evaluaciju performansi nedostaje nam uvid u oblik podataka kojima Pinterest barata. Pretpostavljamo da bi dobili mnogo značajnije rezultate kada bi distribuciju našeg nasumično generiranog skupa podataka modelirali prema stvarnom skupu podataka s kakvim barata Pinterest.
+
+Ono što se najviše istaknulo prilikom implementacije algoritama je jednostavnost istih. Pixie je temeljen na uistinu jednostavnim i razumljivim načelima te daje znatno transparentniju sliku toga što se događa od, primjerice, jednog dubokog modela, što olakšava doradu sustava te ugrađivanje dodatnih heuristika za usmjeravanje nasumičnog šetača. 
+
+Iako je Pinterest za svoje potrebe implementirao vlastite, optimirane strukture podataka za ubrzavanje nasumičnog šetača, iz implementacije je vidljivo kako je razumne performanse moguće postići koristeći i ugrađene Java kolekcije, što čini ovaj model dobrim odabirom za brzi prototip preporučiteljskog sustava za manje skupove podataka.
+
+Konačno, važno je napomenuti da Pixie rješava problem preporučivanja za veoma specifičan i specijaliziran problem te kao takav ne može riješiti isti skup problema kao što to može algoritam poput suradničkog filtriranja. No, ukoliko problem odgovara Pinterestovom, Pixie se čini kao dobar odabir preporučiteljskog sustava.
+
 \chapter{Zaključak}
 
 Preporučiteljski sustav Pixie donosi par novih i zanimljivih ideja u svijet preporučiteljskih sustava. Pinterest je kreiranjem ovog sustava uspio znatno poboljšati performanse i kvalitetu preporuka svoje usluge te povećati vrijednost koju daje korisnicima.
