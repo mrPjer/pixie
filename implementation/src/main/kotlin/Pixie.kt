@@ -99,7 +99,7 @@ private fun List<Board>.sample(startingPin: Pin, weights: Map<Pair<Pin, Board>, 
 private fun List<Pin>.sample(startingBoard: Board, weights: Map<Pair<Pin, Board>, Double>): Pin =
         sample(startingBoard, weights) { i, j -> Pair(j, i) }
 
-fun weightedRandomWalk(graph: AdjacencyGraph, startingPin: Pin, numberOfSteps: Int, weights: Map<Pair<Pin, Board>, Double>): HashMap<Pin, Int> {
+fun weightedRandomWalk(graph: AdjacencyGraph, startingPin: Pin, numberOfSteps: Int, weights: Map<Pair<Pin, Board>, Double>): Counter {
     val counter = HashMap<Pin, Int>()
 
     var step = 0
@@ -116,6 +116,22 @@ fun weightedRandomWalk(graph: AdjacencyGraph, startingPin: Pin, numberOfSteps: I
     }
 
     return counter
+}
+
+fun weightedRandomWalk(graph: AdjacencyGraph, startingPins: List<Pair<Pin, Double>>, numberOfSteps: Int, weights: Map<Pair<Pin, Board>, Double>): List<Counter> {
+    val maxDegree = graph.pinsToBoards.map { it.value.size }.max()!!
+
+    val scalingFactorSum = startingPins.map { (pin, _) ->
+        val degree = graph.pinsToBoards[pin]!!.size
+        degree * (maxDegree - Math.log(degree.toDouble()))
+    }.sum()
+
+    return startingPins.map { (pin, weight) ->
+        val degree = graph.pinsToBoards[pin]!!.size
+        val scalingFactor = degree * (maxDegree - Math.log(degree.toDouble()))
+        val walkLength = Math.round(weight * numberOfSteps * scalingFactor / scalingFactorSum).toInt()
+        weightedRandomWalk(graph, pin, walkLength, weights)
+    }
 }
 
 fun main(args: Array<String>) {
@@ -140,4 +156,13 @@ fun main(args: Array<String>) {
     val weightedRandomWalkResult = weightedRandomWalk(data, startingPin, NUM_STEPS, weights)
     System.out.printf("Done in %d%n", System.currentTimeMillis() - weightedRandomWalkTime)
     weightedRandomWalkResult.printTop(10)
+
+    val multiplePinQuery = (1..5)
+            .map { data.pinsToBoards.keys.toList().sample() }
+            .zip((1..5).map { 0.2 * it })
+    val multiplePinWalkTime = System.currentTimeMillis()
+    System.out.printf("Starting multiple pin walk with pins %s and %d steps%n", multiplePinQuery, NUM_STEPS)
+    val multiplePinWalkResult = weightedRandomWalk(data, multiplePinQuery, NUM_STEPS, weights)
+    System.out.printf("Done in %d%n", System.currentTimeMillis() - multiplePinWalkTime)
+    multiplePinWalkResult.forEach { it.printTop(3); System.out.println() }
 }

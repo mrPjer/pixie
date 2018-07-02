@@ -109,6 +109,7 @@ No, za uspješan rad algoritma, potrebno je na ovu nasumičnu šetnju dodati jo�
 Primijetimo da prethodni algoritam ne uzima u obzir nikakva saznanja o korisniku. Za dva korisnika, $u_1$ i $u_2$, i isti početni pin $p$, preporuka će, ignoriravši nasumičnost šetnje, biti ista. Kako nam je želja dobiti preporuke koje će biti personalizirane za korisnika, potrebno je šetnju \textit{pogurnuti} u pravom smjeru. Prilika za to napraviti je prilikom odabira brida kojim će šetač proći. Umjesto nasumičnog odabira gdje svaki brid ima jednaku vjerojatnost da bude izabran, vjerojatnosti odabira se mogu izraziti kao pripadne težine bridova koje ovise o svojstvima trenutnog korisnika i predmeta koji se razmatra.
 
 \section{Upiti sa više pinova}
+\label{multipin}
 
 Kako bi se korisnika još bolje modeliralo, uz trenutni pin kojeg korisnik pregledava možemo uzeti u obzir i povijest pinova koje je korisnik pregledavao. Tako umjesto jednog upita q izvršimo skup upita Q i za svakog izračunamo pripadni brojač $V_q$.
 
@@ -128,12 +129,12 @@ Kako bi se riješio ovaj problem, za svaki upit q računa se faktor razmjera (\t
 Na temelju tog faktora, računa se duljina šetnje pojedinog pina, $N_q$ temeljem ove formule:
 
 \begin{centering}
-	$ N_q = w_qN\frac{s_q}{\sigma_{r \in Q}s_r} $\par
+	$ N_q = w_qN\frac{s_q}{\sum_{r \in Q}s_r} $\par
 \end{centering}
 
 Distribucija duljine šetnji je sada takva da će šetnje koje počinju u čvorovima visokog stupnja imati razmjerno veću duljinu u odnosu na šetnje koje počinju u čvorovima niskog stupnja, ali će i dalje i ti čvorovi imati dovoljno duge šetnje.
 
-Za potrebe ilustracije, generirali smo nasumičan skup od 40 čvorova stupnja između 1 i 100 i za svakog izračunali $N_q$ uz $N = 1000$ i $w_q = 1$. Vidljivo je da broj koraka raste linearno sa stupnjem čvora. Čvorovima stupnja 1 dodijeljena je šetnja duljine 45 koraka, a čvorovima stupnja 99 šetnja duljine 4328. Korišteni skup podataka dostupan je u popratnoj datoteci \textit{degree\_length\_chart.ods}.
+Za potrebe ilustracije, generirali smo nasumičan skup od 40 čvorova stupnja između 1 i 100 i za svakog izračunali $N_q$ uz $N = 1000$ i $w_q = 1$. Vidljivo je da broj koraka raste linearno sa stupnjem čvora. Čvorovima stupnja 2 dodijeljena je šetnja duljine jednog koraka, a čvorovima stupnja 96 šetnja duljine 53. Korišteni skup podataka dostupan je u popratnoj datoteci \textit{degree\_length\_chart.ods}.
 
 \begin{figure}[h]
 	\centering
@@ -429,6 +430,62 @@ No, bitno je istaknuti i cijenu ovog proširenja. U šetnji sa 100.000 koraka, v
 \end{center}
 
 \section{Upiti sa više pinova}
+
+Pokušajmo sada napraviti upit sa više pinova, gdje svaki pin ima određenu težinu. Podsjetimo se, na ovaj način Pixie modelira korisnikovo ponašanje i interakciju s pinovima u vremenu - stariji pinovi dobivaju manju težinu.
+
+Generirajmo upit kao listu parova (Pin, Double) -- početnih pinova i odgovarajućih težina.
+
+\begin{lstlisting}
+val multiplePinQuery = (1..5)
+	.map { data.pinsToBoards.keys.toList().sample() }
+	.zip((1..5).map { 0.2 * it })
+\end{lstlisting}
+
+Iduće što moramo napraviti je za svaki pin u upitu izvršiti nasumičnu šetnju čija je duljina prilagođena stupnju čvora od kojeg se kreće kao što je to opisano u \ref{multipin}.
+
+\begin{lstlisting}
+fun weightedRandomWalk(graph: AdjacencyGraph, startingPins: List<Pair<Pin, Double>>, numberOfSteps: Int, weights: Map<Pair<Pin, Board>, Double>): List<Counter> {
+    val maxDegree = graph.pinsToBoards.map { it.value.size }.max()!!
+
+    val scalingFactorSum = startingPins.map { (pin, _) ->
+        val degree = graph.pinsToBoards[pin]!!.size
+        degree * (maxDegree - Math.log(degree.toDouble()))
+    }.sum()
+
+    return startingPins.map { (pin, weight) ->
+        val degree = graph.pinsToBoards[pin]!!.size
+        val scalingFactor = degree * (maxDegree - Math.log(degree.toDouble()))
+        val walkLength = Math.round(weight * numberOfSteps * scalingFactor / scalingFactorSum).toInt()
+        weightedRandomWalk(graph, pin, walkLength, weights)
+    }
+}
+\end{lstlisting}
+
+Navedeni upit sada možemo izvršiti i promotriti rezultate.
+
+\begin{lstlisting}
+val multiplePinWalkTime = System.currentTimeMillis()
+System.out.printf("Starting multiple pin walk with pins %s and %d steps%n", multiplePinQuery, NUM_STEPS)
+val multiplePinWalkResult = weightedRandomWalk(data, multiplePinQuery, NUM_STEPS, weights)
+System.out.printf("Done in %d%n", System.currentTimeMillis() - multiplePinWalkTime)
+multiplePinWalkResult.forEach { it.printTop(3); System.out.println() }
+\end{lstlisting}
+
+Upit je generirao pet brojača i završio u 615 milisekundi, što je znatno kraće od pristrane šetnje koja je ovaj put trajala 1615 milisekundi. Ovo ubrzanje možemo zahvaliti skraćivanju puta koje je nastalo kao posljedica prilagođavanja duljine puta različitim stupnjevima čvorova.
+
+\begin{center}
+		  \begin{tabular}{ |l|r|r| }
+					 \hline
+					 Metoda & Vrijeme izvršavanja (ms) & Relativno trajanje\\
+					 \hline
+					 Naivna šetnja & 106 & 100\% \\
+					 \hline
+					 Pristrana šetnja & 1615 & 1523\% \\
+					 \hline
+					 Višestruki upit & 615 & 580\% \\
+					 \hline
+		  \end{tabular}
+\end{center}
 
 \section{Poticanje pinova koji se pojavljuju više puta}
 
